@@ -8,7 +8,11 @@ router.use((req, res, next) => {
     next()
 })
 
-router.route('/home').get(HomeController.home)
+router.get('/', (req, res, next) => {
+    res.redirect('/home')
+})
+
+router.get('/home',HomeController.home)
 
 // router.route('/*').all(HomeController.pageNotFoundHandler)
 

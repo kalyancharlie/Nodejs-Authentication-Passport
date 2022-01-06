@@ -75,7 +75,7 @@ module.exports = {
                         newUser.password = hash;
                         newUser.save().then(() => {
                             req.flash('success_msg', 'You are registered now and can log in')
-                            res.render('/users/login')
+                            res.redirect('/users/login')
                         });
                     });
                 }

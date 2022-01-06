@@ -6,6 +6,7 @@ const session = require("express-session");
 const passport = require("passport")
 const morgan = require('morgan')
 const authGuard = require('../config/auth')
+const MongoStore = require('connect-mongo')
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -21,14 +22,26 @@ app.use(express.json());
 // Logging
 app.use(morgan('dev'))
 
-// Express Session Middleware
-app.use(
-    session({
-        secret: "This is secret",
-        resave: true,
-        saveUninitialized: true,
+// Mongoose Connection
+mongoose
+    .connect(process.env.MONGO_URI, { useNewUrlParser: true})
+    .then()
+    .catch((err) => console.log(err));
+mongoose.connection
+    .once("open", () => {
+        console.log("Connected to DB");
     })
-);
+    .on("error", (err) => console.warn("MongoDB Connection Error", err));
+
+// Express Session Middleware
+app.use(session({
+    name: 'quicklinks.sess', store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI,
+        touchAfter: 24 * 3600
+    }), secret: process.env.SECRET, resave: false,
+    saveUninitialized: false, cookie: { maxAge: 1000 * 60 * 15 }
+}));
+
 
 // Passport Auth Middleware
 app.use(passport.initialize())
@@ -47,16 +60,7 @@ app.use((req, res, next) => {
     next()
 })
 
-// Mongoose Connection
-mongoose
-    .connect(process.env.MONGO_URI, { useNewUrlParser: true })
-    .then()
-    .catch((err) => console.log(err));
-mongoose.connection
-    .once("open", () => {
-        console.log("Connected to DB");
-    })
-    .on("error", (err) => console.warn("MongoDB Connection Error", err));
+
 
 // EJS
 app.use(expressLayouts);
